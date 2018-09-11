@@ -95,31 +95,6 @@ function saveBackgroundColor(url, color) {
   chrome.storage.sync.set(items);
 }
 
-// Returns a new notification ID used in the notification.
-function getNotificationId() {
-  var id = Math.floor(Math.random() * 9007199254740992) + 1;
-  return id.toString();
-}
-
-/*
-  Displays a notification with the current time. Requires "notifications"
-  permission in the manifest file (or calling
-  "Notification.requestPermission" beforehand).
-*/
-function showNotification() {
-  var time = /(..)(:..)/.exec(new Date());     // The prettyprinted time.
-  var hour = time[1] % 12 || 12;               // The prettyprinted hour.
-  var period = time[1] < 12 ? 'a.m.' : 'p.m.'; // The period of the day.
-  var opt = {
-  type: "basic",
-  title: "Primary Title",
-  message: "Primary message to display",
-  iconUrl: "48.png",
-  requireInteraction:true
-  };
-  chrome.notifications.create(getNotificationId(), opt, function() {});
-}
-
 // This extension loads the saved background color for the current tab if one
 // exists. The user can select a new background color from the dropdown for the
 // current page, and it will be saved as part of the extension's isolated
@@ -150,7 +125,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     //添加按钮响应事件
     addRequest.addEventListener('click', () => {
-      showNotification();
+      
+      // showNotification();push.removeListener();
+//      popup中调用background中的方法
+var bg = chrome.extension.getBackgroundPage();//获取background页面
+bg.startTasks();
+
     });
   });
 });
