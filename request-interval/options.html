@@ -10,32 +10,61 @@
 <!doctype html>
 <html>
   <head>
+    <meta charset="utf-8" />
     <title>Notification Demo</title>
     <link href="style.css" rel="stylesheet" type="text/css">
     <script src="options.js"></script>
+    <script src="jquery.js"></script>
   </head>
   <body>
-    <h1>
-      <img src="48.png" alt="Toast">
-      Notification Demo
-    </h1>
-    <h2>Options</h2>
-    <form id="options">
-      <input type="checkbox" name="isActivated" checked>
-      Display a notification every
-      <select name="frequency">
-        <option>1</option>
-        <option>2</option>
-        <option>3</option>
-        <option>4</option>
-        <option>5</option>
-        <option>10</option>
-        <option>15</option>
-        <option>20</option>
-        <option>25</option>
-        <option>30</option>
+     <form id="requestForm">
+    <div style="padding: 0.5em;">
+     任务名：<input type="text" name="requestName">
+    </div>
+    <div style="padding: 0.5em;">
+     请求地址：<input type="text" name="requestUrl">
+    </div>
+    <div style="padding: 0.5em;">
+     参数：<input type="text" name="requestParams">
+      <select name="requestContentType">
+        <option>Text(text/plain)</option>
+        <option>JSON(application/json)</option>
       </select>
-      minute(s).
-    </form>
+    </div>
+    <div style="padding: 0.5em;">
+     请求方式：
+     <select name="requestMethod">
+        <option>GET</option>
+        <option>POST</option>
+      </select>
+    </div>
+    <div style="padding: 0.5em;">
+     请求时间间隔：<input type="number" name="requestInterval"> 分钟（默认30分钟请求一次）
+    </div>
+  </form>
+    <div>
+      <button id="add">添加</button>
+    </div>
+    <h1>
+      <img src="icon.png" alt="Toast">
+      Interval Request
+    </h1>
+    <h2>请求列表</h2>
+    <div>
+      <ol id="requestList">
+      <li >
+        <div>任务名 | 请求地址 | 请求方式 | 创建时间 | 最后一次请求时间</div>
+        <div>请求地址</div>
+        <div>请求参数</div>
+        <div><button data-id="123" class="modify">修改</button><button data-id="123" class="delete">删除</button></div>
+      </li>
+      <li>
+        <div>任务名 | 请求地址 | 请求方式 | 创建时间 | 最后一次请求时间</div>
+        <div>请求地址</div>
+        <div>请求参数</div>
+        <div><button data-id="456" class="modify">修改</button><button data-id="456" class="delete">删除</button></div>
+      </li>
+      </ol>
+    </div>
   </body>
 </html>

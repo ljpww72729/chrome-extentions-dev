@@ -30,6 +30,6 @@
     // Note: Because of bug 134315, you must declare any images you
   // want to use with createNotification() as a web accessible resource.
   "web_accessible_resources": [
-    "48.png"
+
   ]
 }

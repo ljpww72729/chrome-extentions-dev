@@ -128,8 +128,12 @@ document.addEventListener('DOMContentLoaded', () => {
       
       // showNotification();push.removeListener();
 //      popup中调用background中的方法
-var bg = chrome.extension.getBackgroundPage();//获取background页面
-bg.startTasks();
+    var bg = chrome.extension.getBackgroundPage();//获取background页面
+    bg.startTasks(false);
+
+//     chrome.runtime.sendMessage({greeting: "您好"}, function(response) {
+//   console.log(response.farewell);
+// });
 
     });
   });
