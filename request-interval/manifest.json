@@ -23,7 +23,7 @@
     "activeTab",
     "storage",
     "alarms",
-    "https://www.cytxl.com.cn/",
+    "*://*/*",
     "webRequest",
     "webRequestBlocking"
   ],

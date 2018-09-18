@@ -28,6 +28,15 @@ ol{
 }
 ol li{
  list-style-type:none;
- background-color: red;
- margin: 6px;
+ background-color: #EFECF0;
+ padding: 6px;
+ margin-top: 0px;
+ margin-bottom: 6px;
+ margin-left: 2px;
+ margin-right: 2px;
+}
+
+li button{
+	margin-top: 6px;
+	margin-right: 4px;
 }

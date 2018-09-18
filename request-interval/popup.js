@@ -2,6 +2,33 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+// 对Date的扩展，将 Date 转化为指定格式的String
+// 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
+// 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字)
+// 例子：
+// (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2006-07-02 08:09:04.423
+// (new Date()).Format("yyyy-M-d h:m:s.S") ==> 2006-7-2 8:9:4.18
+Date.prototype.Format = function(fmt) { // author: meizz
+    var o = {
+        "M+": this.getMonth() + 1,
+        // 月份
+        "d+": this.getDate(),
+        // 日
+        "h+": this.getHours(),
+        // 小时
+        "m+": this.getMinutes(),
+        // 分
+        "s+": this.getSeconds(),
+        // 秒
+        "q+": Math.floor((this.getMonth() + 3) / 3),
+        // 季度
+        "S": this.getMilliseconds() // 毫秒
+    };
+    if (/(y+)/.test(fmt)) fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o) if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+}
+
 /**
  * Get the current URL.
  *
@@ -95,6 +122,45 @@ function saveBackgroundColor(url, color) {
   chrome.storage.sync.set(items);
 }
 
+// Returns a new notification ID used in the notification.
+function getNotificationId() {
+    var id = Math.floor(Math.random() * 9007199254740992) + 1;
+    return id.toString();
+} 
+
+chrome.notifications.onButtonClicked.addListener(function (notificationId, buttonIndex){
+  console.log("notificationId = " + notificationId + "buttonIndex = " + buttonIndex);
+})
+
+function showNotification(optType, optTitle, optMsg, optinteraction) {
+    // Test for notification support.
+    if (!optType) {
+        optType = "basic";
+    }
+    if (!optTitle) {
+        optTitle = "通知";
+    }
+    var buttons = [{"title":"close"},{"title":"open"}];
+    if (window.Notification) {
+        var opt = {
+            type: optType,
+            title: optTitle ,
+            message: optMsg,
+            iconUrl: "notifications_active.png",
+            buttons:buttons,
+            // contextMessage: new Date().Format("yyyy-MM-dd hh:mm"),
+            requireInteraction: optinteraction
+        };
+        chrome.notifications.create(getNotificationId(), opt,
+        function() {});
+    } else {
+        console.log(info);
+    }
+}
+
+ // popup中调用background中的方法
+ var bg = chrome.extension.getBackgroundPage();//获取background页面
+
 // This extension loads the saved background color for the current tab if one
 // exists. The user can select a new background color from the dropdown for the
 // current page, and it will be saved as part of the extension's isolated
@@ -103,32 +169,61 @@ function saveBackgroundColor(url, color) {
 // to a document's origin. Also, using chrome.storage.sync instead of
 // chrome.storage.local allows the extension data to be synced across multiple
 // user devices.
+
+var requestArr;
 document.addEventListener('DOMContentLoaded', () => {
-  getCurrentTabUrl((url) => {
-    var dropdown = document.getElementById('dropdown');
+
+
+  chrome.storage.sync.get("requestArrData",
+    function(result) {
+        if (!chrome.runtime.error) {
+            if (result.requestArrData) {
+                requestArr = JSON.parse(result.requestArrData);
+                // 展示数据
+                var listHtml = "";
+                for (j = 0, len = requestArr.length; j < len; j++) {
+            
+                    listHtml += '<li><div>' + requestArr[j].requestName+ ' | ' 
+                    + new Date(requestArr[j].lastRequestTime).Format("yyyy-MM-dd hh:mm") + '</div> ' 
+                     + '<div>请求格式化结果：' + requestArr[j].respFormatRst + '</div> ' 
+                    + '</li>';
+                }
+                requestList.innerHTML = listHtml;
+
+            } else {
+                requestArr = [];
+            }
+
+        }
+      });  
+    // var dropdown = document.getElementById('dropdown');
     var addRequest = document.getElementById('addRequest');
 
-    // Load the saved background color for this page and modify the dropdown
-    // value, if needed.
-    getSavedBackgroundColor(url, (savedColor) => {
-      if (savedColor) {
-        changeBackgroundColor(savedColor);
-        dropdown.value = savedColor;
-      }
-    });
+    // // Load the saved background color for this page and modify the dropdown
+    // // value, if needed.
+    // getSavedBackgroundColor(url, (savedColor) => {
+    //   if (savedColor) {
+    //     changeBackgroundColor(savedColor);
+    //     dropdown.value = savedColor;
+    //   }
+    // });
 
-    // Ensure the background color is changed and saved when the dropdown
-    // selection changes.
-    dropdown.addEventListener('change', () => {
-      changeBackgroundColor(dropdown.value);
-      saveBackgroundColor(url, dropdown.value);
-    });
+    // // Ensure the background color is changed and saved when the dropdown
+    // // selection changes.
+    // dropdown.addEventListener('change', () => {
+    //   changeBackgroundColor(dropdown.value);
+    //   saveBackgroundColor(url, dropdown.value);
+    // });
     //添加按钮响应事件
     addRequest.addEventListener('click', () => {
-      
-      // showNotification();push.removeListener();
-//      popup中调用background中的方法
-    var bg = chrome.extension.getBackgroundPage();//获取background页面
+  
+
+
+
+    // console.log(myArray);
+
+
+    bg.showNotification("","","提示提示提示提示提示提示提示提示提示提示提示提示提示提示提示提示提示提示提示提示提示提示提示", true);
     bg.startTasks(false);
 
 //     chrome.runtime.sendMessage({greeting: "您好"}, function(response) {
@@ -136,5 +231,4 @@ document.addEventListener('DOMContentLoaded', () => {
 // });
 
     });
-  });
 });

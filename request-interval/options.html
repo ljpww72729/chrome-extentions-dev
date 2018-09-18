@@ -18,6 +18,9 @@
   </head>
   <body>
      <form id="requestForm">
+       <div style="display: none;">
+      id：<input type="text" name="timestamp">
+    </div>
     <div style="padding: 0.5em;">
      任务名：<input type="text" name="requestName">
     </div>
@@ -30,6 +33,7 @@
         <option>Text(text/plain)</option>
         <option>JSON(application/json)</option>
       </select>
+      参数中的毫秒数可通过设定$timestamp$宏来动态替换为实时毫秒数
     </div>
     <div style="padding: 0.5em;">
      请求方式：
@@ -41,9 +45,19 @@
     <div style="padding: 0.5em;">
      请求时间间隔：<input type="number" name="requestInterval"> 分钟（默认30分钟请求一次）
     </div>
+    <div style="padding: 0.5em;">
+     响应格式化：<input type="text" name="respFormat">
+    </div>
+    <div style="padding: 0.5em;">
+     是否固定通知：
+     <select name="requireInteraction">
+        <option>否</option>
+        <option>是</option>
+      </select>
+    </div>
   </form>
     <div>
-      <button id="add">添加</button>
+      <button id="add">添加</button><button id="update">确定修改</button><button id="updateCancel">取消修改</button>
     </div>
     <h1>
       <img src="icon.png" alt="Toast">
@@ -52,18 +66,7 @@
     <h2>请求列表</h2>
     <div>
       <ol id="requestList">
-      <li >
-        <div>任务名 | 请求地址 | 请求方式 | 创建时间 | 最后一次请求时间</div>
-        <div>请求地址</div>
-        <div>请求参数</div>
-        <div><button data-id="123" class="modify">修改</button><button data-id="123" class="delete">删除</button></div>
-      </li>
-      <li>
-        <div>任务名 | 请求地址 | 请求方式 | 创建时间 | 最后一次请求时间</div>
-        <div>请求地址</div>
-        <div>请求参数</div>
-        <div><button data-id="456" class="modify">修改</button><button data-id="456" class="delete">删除</button></div>
-      </li>
+    
       </ol>
     </div>
   </body>

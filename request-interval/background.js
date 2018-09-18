@@ -24,18 +24,25 @@ function getNotificationId() {
   permission in the manifest file (or calling
   "Notification.requestPermission" beforehand).
 */
-function showNotification(info) {
+function showNotification(optType, optTitle, optMsg, optinteraction) {
     // Test for notification support.
+    if (!optType) {
+        optType = "basic";
+    }
+    if (!optTitle) {
+        optTitle = "通知";
+    }
     if (window.Notification) {
-        var time = /(..)(:..)/.exec(new Date()); // The prettyprinted time.
-        var hour = time[1] % 12 || 12; // The prettyprinted hour.
-        var period = time[1] < 12 ? 'a.m.': 'p.m.'; // The period of the day.
+        // var time = /(..)(:..)/.exec(new Date()); // The prettyprinted    time.
+        // var hour = time[1] % 12 || 12; // The prettyprinted hour.
+        // var period = time[1] < 12 ? 'a.m.': 'p.m.'; // The period of the day.
         var opt = {
-            type: "basic",
-            title: "聊会儿",
-            message: info,
+            type: optType,
+            title: optTitle + "  " + new Date().Format("yyyy-MM-dd hh:mm"),
+            message: optMsg,
             iconUrl: "notifications_active.png",
-            requireInteraction: true
+            // contextMessage: new Date().Format("yyyy-MM-dd hh:mm"),
+            requireInteraction: optinteraction
         };
         chrome.notifications.create(getNotificationId(), opt,
         function() {});
@@ -44,86 +51,154 @@ function showNotification(info) {
     }
 }
 
-var liaohuisignin = "liaohuisignin";
+// 请求列表数据
+var requestArr = [];
 
-// 发送post请求，参考：https://metabroadcast.com/blog/a-chrome-extension-hit-my-api
-function postXHR(url, params, contentType, callback, requestName) { // Added data to function
-    var xhr = new XMLHttpRequest();
+// 发送xhr请求，参考：https://metabroadcast.com/blog/a-chrome-extension-hit-my-api
+function excuteXHR(requestItem, callback) { // Added data to function
+    // 执行签到请求
+    var requestName = requestItem.requestName;
+    var requestUrl = requestItem.requestUrl;
+    var requestParams = requestItem.requestParams;
+    var requestContentType = requestItem.requestContentType;
+    var requestMethod = requestItem.requestMethod;
 
-    if (!url) {
+    if (!requestUrl) {
         throw new Error('No URL supplied');
     }
-    xhr.open("POST", url, true); // Changed "GET" to "POST"
-    xhr.setRequestHeader("Content-type", contentType + ";");
+
+    if (requestParams) {
+        requestParams = requestParams.replace("$timestamp$", new Date().getTime());
+    }
+
+    var xhr = new XMLHttpRequest();
+    xhr.open(requestMethod, requestUrl, true); // Changed "GET" to "POST"
+    if (requestMethod == "POST") {
+       xhr.setRequestHeader("Content-type", requestContentType + ";"); 
+    }
     xhr.withCredentials = "true";
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {
             if (xhr.status === 200) {
-                try {
-                    if (callback) {
-                        var result = JSON.parse(xhr.response);
-                        // if (result.code == 0) {
-                        //     chrome.storage.sync.set({liaohuisignin: new Date().Format("yyyy-MM-dd")}, function() {
-                        //     if (chrome.runtime.error) {
-                        //         console.log("Runtime error.");
-                        //     }else{
-                        //         // 通知保存完成。
-                        //         callback("今日已签！剩余时长：" + xhr.response + "分钟");
-                        //     }
-                        // });
-                        // } 
-                        callback(xhr.response);
-                    }
-                } catch(e) {
-                    throw new Error('Malformed response');
+                if (callback) {
+                    callback(requestItem, xhr.response);
                 }
             }
         }
     }
-    if (params) {
+    if (requestParams) {
         //params = JSON.stringify(params); // Stringify the data Object literal
-        xhr.send(params); // Added the JSON stringified object.
+        xhr.send(requestParams); // Added the JSON stringified object.
     } else {
         xhr.send();
     }
 }
 
-// 发送get请求
-function getXHR(url, contentType, callback, requestName) { // Added data to function
-    var xhr = new XMLHttpRequest();
-
-    if (!url) {
-        throw new Error('No URL supplied');
-    }
-    xhr.open("POST", url, true); // Changed "GET" to "POST"
-    xhr.setRequestHeader("Content-type", contentType + ";");
-    xhr.withCredentials = "true";
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-                try {
-                    if (callback) {
-                        var result = JSON.parse(xhr.response);
-                        // if (result.code == 0) {
-                        //     chrome.storage.sync.set({liaohuisignin: new Date().Format("yyyy-MM-dd")}, function() {
-                        //     if (chrome.runtime.error) {
-                        //         console.log("Runtime error.");
-                        //     }else{
-                        //         // 通知保存完成。
-                        //         callback("今日已签！剩余时长：" + xhr.response + "分钟");
-                        //     }
-                        // });
-                        // } 
-                        callback(xhr.response);
+function handleResponse(requestItem, respStr) {
+    try {
+        // 响应格式化字符串
+    var respFormat = requestItem.respFormat;
+    if (respFormat) {
+        // 获取所有以$开头及结尾的字符串，用户获取对应的值
+        var re = /\$.*?\$/g;
+        var reKey = /\[.*?\]/g;
+        var respFormatArr = respFormat.match(re);
+        for (i = 0, len = respFormatArr.length; i < len; i++) {
+          var formatItem = respFormatArr[i];
+          var formatItemSimple = formatItem.replace(/\$/g, "");
+          var keysArr = formatItemSimple.split('.');
+          var result = JSON.parse(respStr);
+          for (j = 0, keysLen = keysArr.length; j < keysLen; j++) {
+            var key = keysArr[j];
+            var keyArr = key.match(reKey);
+            if (keyArr && keyArr.length == 1) {
+                // 是数组数据
+                var keyItem = keyArr[0].replace(/[\[\]]/g, "");
+                var keyItemName = key.replace(reKey, "");
+                var keyItemArr = keyItem.split(",");
+                if (keyItemArr.length == 1) {
+                    // 说明只取数组中的一项
+                    var keyItemArrIndex = parseInt(keyItemArr[0]);
+                    result = formatResult(result,  keyItemName);
+                    result = formatResult(result,  keyItemArrIndex);
+                }else if (keyItemArr.length == 2) {
+                    // 说明取数组中的一连续的一组数据
+                    var keyItemArrIndexPrefix = parseInt(keyItemArr[0]);
+                    var keyItemArrIndexSuffix = parseInt(keyItemArr[1]);
+                    result = formatResult(result,  keyItemName);
+                    var resultArr = [];
+                    resultArr.push("user");// 添加该标识表示程序创建的数组
+                    for (var m = keyItemArrIndexPrefix; m < keyItemArrIndexPrefix + keyItemArrIndexSuffix; m++) {
+                        resultArr.push(formatResult(result,  m));
                     }
-                } catch(e) {
-                    throw new Error('Malformed response');
+                    result = resultArr;
+                }else{
+                    // 没有按照指定的格式编写响应数据串
                 }
+            }else{
+                result = formatResult(result, keysArr[j]);
             }
+            
+          }
+          var resultFormat = "";
+          if(isArray(result)){
+            for (i = 0, len = result.length; i < len; i++) {
+            resultFormat += result[i] + "\n";
+         }  
+
+          }else{
+            resultFormat = result;
+          }
+          respFormat = respFormat.replace(formatItem, resultFormat);
         }
+    }else{
+        respFormat = respStr;
+    }
+    } catch(e) {
+        throw new Error('Malformed response');
     }
 
-    xhr.send();
+    for (j = 0, len = requestArr.length; j < len; j++) {
+         if (requestItem.timestamp.toString() == requestArr[j].timestamp.toString()) {
+            requestArr[j].respFormatRst = respFormat.toString();
+            requestArr[j].lastRequestTime = new Date().getTime();
+            var jsonString = JSON.stringify(requestArr);
+            // 设置最后一次请求时间
+            chrome.storage.sync.set({
+                "requestArrData": jsonString
+            }, function() {
+                if (chrome.runtime.error) {
+                    console.log("Runtime error.");
+                } else {
+                    // 通知保存完成。
+                    // showNotification("", "", "请求结果写入成功！", false);
+                }
+            });
+
+         }
+    }
+
+    showNotification("", requestItem.requestName, respFormat.toString(), requestItem.requireInteraction);
+}
+
+function isArray(arr){
+    return Object.prototype.toString.call(arr)=='[object Array]';
+}
+
+function formatResult(result, key){
+    var resultHandle;
+    if (isArray(result) && result.length > 1 && result[0] == "user") {
+         for (i = 1, len = result.length; i < len; i++) {
+           result[i] = result[i][key]
+         }  
+         result.shift(); 
+         resultHandle = result;
+    }else{
+        resultHandle = result[key];
+    }
+
+    return resultHandle;
+    
 }
 
 // 修改 User-Agent 和 Origin
@@ -134,7 +209,8 @@ chrome.webRequest.onBeforeSendHeaders.addListener(function(details) {
             details.requestHeaders[i].value = JDAPP_USER_AGENT;
         }
         if (details.requestHeaders[i].name === 'Origin') {
-            details.requestHeaders[i].value = "";
+            // 删除Origin Header
+            details.requestHeaders.splice(i, 1);
         }
     }
     return {
@@ -179,50 +255,15 @@ Date.prototype.Format = function(fmt) { // author: meizz
 // 定时任务监听
 chrome.alarms.onAlarm.addListener(function(alarm) {
 
-    var requestArr;
-    chrome.storage.sync.get("requestArrData",
-    function(result) {
-        if (!chrome.runtime.error) {
-            if (result.requestArrData) {
-                requestArr = JSON.parse(result.requestArrData);
-            } else {
-                requestArr = [];
-            }
             // 循环查询定时任务
             for (j = 0, len = requestArr.length; j < len; j++) {
                 if (alarm.name == requestArr[j].timestamp.toString()) {
 
                     // 执行签到请求
-                    var requestName = requestArr[j].requestName;
-                    var requestUrl = requestArr[j].requestUrl;
-                    var requestParams = requestArr[j].requestParams;
-                    var requestContentType = requestArr[j].requestContentType;
-                    var requestMethod = requestArr[j].requestMethod;
-                    if (requestMethod == "POST") {
-                        postXHR(requestUrl, requestParams, requestContentType, showNotification, requestName);
-                    } else {
-                        getXHR(requestUrl, requestContentType, showNotification, requestName);
-                    }
-
-                    requestArr[j].lastRequestTime = new Date().getTime();
-                    var jsonString = JSON.stringify(requestArr);  
-                    // 设置最后一次请求时间
-                    chrome.storage.sync.set({"requestArrData": jsonString}, function() {
-                        if (chrome.runtime.error) {
-                            console.log("Runtime error.");
-                        }else{
-                            // 通知保存完成。
-                            showNotification("设置最后更新日期成功！");
-                        }
-                    });
-
+                    excuteXHR(requestArr[j], handleResponse);
                     break;
                 }
             }
-        } else {
-
-}
-    });
 
 });
 
@@ -260,7 +301,6 @@ function cancelAlarm(alarmName) {
 //     checkAlarm();
 //   });
 // }
-
 // 获取消息
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     console.log(sender.tab ? "来自内容脚本：" + sender.tab.url: "来自扩展程序");
@@ -273,9 +313,30 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
 });
 
+// 监听storage
+chrome.storage.onChanged.addListener(function(changes, namespace) {
+    for (key in changes) {
+        if (key == "requestArrData") {
+             var storageChange = changes[key];
+
+             var newValue = storageChange.newValue;
+             if (newValue) {
+                requestArr = JSON.parse(newValue);
+            } else {
+                requestArr = [];
+            }
+      console.log('Storage key "%s" in namespace "%s" changed. ' +
+                  'Old value was "%s", new value is "%s".',
+                  key,
+                  namespace,
+                  storageChange.oldValue,
+                  storageChange.newValue);
+        }
+    }
+});
+
 // 开始执行任务
 function startTasks(forceRefresh) {
-    var requestArr;
     chrome.storage.sync.get("requestArrData",
     function(result) {
         if (!chrome.runtime.error) {
