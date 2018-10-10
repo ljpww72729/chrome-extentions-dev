@@ -247,10 +247,12 @@ function addOrUpdate(){
         }
         var requestParams = requestForm.requestParams.value;
         var requestInterval = requestForm.requestInterval.value;
-        if (!requestInterval.replace(/\s+/g, "")) {
-            // 默认30分钟请求一次
-            requestInterval = "30";
-        }
+  if (requestInterval && (requestInterval == -1 || requestInterval >= 1)) {
+        requestInterval = parseInt(requestInterval);
+  }else{
+      // 默认30分钟请求一次
+            requestInterval = 30;
+  }
         var respFormat = requestForm.respFormat.value;
         var timestamp = requestForm.timestamp.value;
         if (!timestamp) {
@@ -262,7 +264,7 @@ function addOrUpdate(){
             data["requestParams"] = requestParams.replace(/\s+/g, "");
             data["requestContentType"] = requestContentType;
             data["requestMethod"] = requestMethod;
-            data["requestInterval"] = parseInt(requestInterval.replace(/\s+/g, ""));
+            data["requestInterval"] = requestInterval;
             data["lastRequestTime"] = 0;
             data["requireInteraction"] = requireInteraction;
             data["respFormat"] = respFormat.replace(/\s+/g, "");
@@ -282,7 +284,7 @@ function addOrUpdate(){
                     if (!requestArr[j].respFormatRst) {
                         requestArr[j]["respFormatRst"] = "";
                     }
-                    requestArr[j].requestInterval = parseInt(requestInterval.replace(/\s+/g, ""));
+                    requestArr[j].requestInterval = requestInterval;
                     requestArr[j].requireInteraction = requireInteraction;
                     break;
                 }
