@@ -1,0 +1,84 @@
+<!--
+  Copyright (c) 2012 The Chromium Authors. All rights reserved.
+  Use of this source code is governed by a BSD-style license that can be
+  found in the LICENSE file.
+
+  Brian Kennish <bkennish@chromium.org>
+
+  An option page for configuring notifications.
+-->
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Notification Demo</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <script src="options.js"></script>
+    <script src="jquery.js"></script>
+  </head>
+  <body>
+     <form id="requestForm">
+       <div style="display: none;">
+      id：<input type="text" id="timestamp">
+    </div>
+    <div style="padding: 0.5em;">
+     任务名：<input type="text" id="requestName">
+    </div>
+    <div style="padding: 0.5em;">
+     请求地址：<input type="text" id="requestUrl">
+    </div>
+    <div style="padding: 0.5em;">
+     参数：<input type="text" id="requestParams">
+      <select id="requestContentType">
+        <option>Text(text/plain)</option>
+        <option>JSON(application/json)</option>
+      </select>
+      参数中的毫秒数可通过设定$timestamp$宏来动态替换为实时毫秒数
+    </div>
+    <div style="padding: 0.5em;">
+     请求方式：
+     <select id="requestMethod">
+        <option>GET</option>
+        <option>POST</option>
+      </select>
+    </div>
+    <div style="padding: 0.5em;">
+     请求时间间隔：<input type="number" id="requestInterval"> 分钟（请填写等于-1（不自动请求）或者大于等于1的值，不填则默认30分钟请求一次）
+    </div>
+    <div style="padding: 0.5em;">
+     响应格式化：<input type="text" id="respFormat">
+    </div>
+    <div style="padding: 0.5em;">
+     是否固定通知：
+     <select id="requireInteraction">
+        <option>否</option>
+        <option>是</option>
+      </select>
+    </div>
+  </form>
+    <div>
+      <button class="button" id="add">添加</button><button class="button" id="update">确定修改</button><button class="button" id="updateCancel">取消修改</button>
+    </div>
+    <h1>
+      <img src="icon.png" alt="Toast">
+      Interval Request
+    </h1>
+    <div>
+    <h2>请求列表</h2>
+    <label class="button buttonshadow" id="exportData">
+      导出备份
+    </label>
+
+    <label class="button buttonshadow" for="importData">
+      导入备份
+        </label>
+      <input type="file" id="importData" style="display:none;">
+
+    </div>
+    <div>
+      <ol id="requestList">
+    
+      </ol>
+    </div>
+  </body>
+</html>

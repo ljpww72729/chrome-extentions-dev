@@ -1,0 +1,21 @@
+{
+  "backup_name": {
+    "message": "intervalrequest.json"
+  },
+  "chrome_extension_description": {
+    "message": "Devuelve los idiomas aceptados por el navegador"
+  },
+  "chrome_accept_languages": {
+    "message": "$CHROME$ acepta los idiomas $languages$",
+    "placeholders": {
+      "chrome": {
+        "content": "Chrome",
+        "example": "Chrome"
+      },
+      "languages": {
+        "content": "$1",
+        "example": "en-US,sr,de"
+      }
+    }
+  }
+}
