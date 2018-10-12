@@ -3,7 +3,8 @@
   "name": "IntervalRequest",
   "short_name": "IntervalRequest",
   "description": "Request Interval.",
-  "version": "1.0.2",
+  "version": "1.0.3",
+  "default_locale": "zh_CN",
   "icons": {
     "48": "icon.png",
     "128": "128.png"

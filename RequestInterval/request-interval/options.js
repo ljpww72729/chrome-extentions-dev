@@ -42,8 +42,8 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
                 requestArr = [];
             }
             // 如果任务名及请求地址不为空，则不刷新
-             var requestName = requestForm.requestName.value;
-             var requestUrl = requestForm.requestUrl.value;
+          var requestName =  document.getElementById('requestName').value;
+          var requestUrl = document.getElementById('requestUrl').value;
         if (!requestName.replace(/\s+/g, "") && !requestUrl.replace(/\s+/g, "")) {
            location.reload();
         }   
@@ -65,6 +65,97 @@ function copyToClip(id) {
 
 }
 
+var savedFileEntry, fileDisplayPath;
+
+function getDataAsText(callback) {
+  chrome.storage.sync.get("requestArrData", function(result) {
+    var text = '';
+
+    if (!chrome.runtime.error) {
+      if (result.requestArrData) {
+        text = result.requestArrData;
+      }
+    }
+
+    callback(text);
+
+  }.bind(this));
+}
+
+    function utf8_to_b64(str) {
+        return window.btoa(unescape(encodeURIComponent(str)));
+    }
+
+    function b64_to_utf8(str) {
+        return decodeURIComponent(escape(window.atob(str)));
+    }
+
+// 导出备份
+function doExportToDisk() {
+getDataAsText( function(contents) {
+
+  // create a temporary anchor to navigate to data uri
+            var a = document.createElement("a");
+
+            a.download = chrome.i18n.getMessage("backup_name");
+            a.href = "data:text;base64," + utf8_to_b64(contents);
+
+            // a.href = "data:text/plain;charset=utf-8;," + encodeURIComponent(dumpedString);
+            // a.href = "data:text;base64," + utf8_to_b64(dumpedString);
+            // a.href = "data:text;base64," + utf8_to_b64(dumpedString);
+            //window.btoa(dumpedString);
+
+            // create & dispatch mouse event to hidden anchor
+            var mEvent = document.createEvent("MouseEvent");
+            mEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+
+  a.dispatchEvent(mEvent);
+});
+
+}
+
+// 导入备份
+    function doImportFromDisk(evt) {
+        var file = evt.target.files[0];	// FileList object
+        var reader = new FileReader();
+
+        // Closure to capture the file information.
+        reader.onload = function (e) {
+            // newline delimited json
+            var dumpedString = e.target.result;
+
+          importData(dumpedString);
+        };
+
+        // Read in the image file as a data URL.
+        reader.readAsText(file, "utf-8");
+        // reader.readAsDataURL(file);
+    }
+
+function importData(data){
+  if(data){
+     chrome.storage.sync.set({
+       "requestArrData": data
+                },
+                function() {
+                    if (chrome.runtime.error) {
+                        console.log("Runtime error.");
+                    } else {
+                        // 通知保存完成。
+                        bg.showNotification("", "", "数据导入成功！", false);
+                        chrome.runtime.sendMessage({
+                            msg: "refresh-data"
+                        },
+                        function(response) {
+                            console.log(response.result);
+                        });
+                    }
+                });
+  }
+  
+}
+
+
 window.addEventListener('load',function() {
     chrome.storage.sync.get("requestArrData",
     function(result) {
@@ -85,45 +176,45 @@ window.addEventListener('load',function() {
                     + '<div>请求参数：' + requestArr[j].requestParams + '</div> ' 
                     + '<div>响应格式化：' + requestArr[j].respFormat + '</div> ' 
                      + '<div>响应格式化结果：' + requestArr[j].respFormatRst + '</div> ' 
-                    + '<div>请求结果：<button data-id="'+ requestArr[j].timestamp.toString() + '"class="show">显示</button>'
-                    +'<button data-id="' + requestArr[j].timestamp.toString() + '"class="hide">隐藏</button>'
-                    +'<button data-id="' + requestArr[j].timestamp.toString() + '"class="copy">复制</button>'
+                    + '<div>请求结果：<button data-id="'+ requestArr[j].timestamp.toString() + '"class="show button">显示</button>'
+                    +'<button data-id="' + requestArr[j].timestamp.toString() + '"class="hide button">隐藏</button>'
+                    +'<button data-id="' + requestArr[j].timestamp.toString() + '"class="copy button">复制</button>'
                     +'<p id="' + requestArr[j].timestamp.toString() + '"></p></div> ' 
-                    + '<div><button data-id="' + requestArr[j].timestamp.toString() + '"class="modify">修改</button>' 
-                    + '<button data-id="' + requestArr[j].timestamp.toString() + '"class="delete">删除</button></div>' 
+                    + '<div><button data-id="' + requestArr[j].timestamp.toString() + '"class="modify button">修改</button>' 
+                    + '<button data-id="' + requestArr[j].timestamp.toString() + '"class="delete button">删除</button></div>' 
                     + '</li>';
                 }
-                requestList.innerHTML = listHtml;
+              requestList.innerHTML = listHtml;
 
             } else {
-                requestArr = [];
+              requestArr = [];
             }
-            $(".modify").click(function(e) {
+          $(".modify").click(function(e) {
             for (j = 0, len = requestArr.length; j < len; j++) {
                 if (e.currentTarget.dataset.id == requestArr[j].timestamp.toString()) {
-                    requestForm.timestamp.value = requestArr[j].timestamp;
-                    requestForm.requestName.value = requestArr[j].requestName;
-                    requestForm.requestUrl.value = requestArr[j].requestUrl;
-                    requestForm.requestParams.value = requestArr[j].requestParams;
-                    requestForm.requestInterval.value = requestArr[j].requestInterval;
-                    requestForm.respFormat.value = requestArr[j].respFormat;
-                    requestForm.requestMethod.value = requestArr[j].requestMethod;
+                    document.getElementById('timestamp').value = requestArr[j].timestamp;
+                  document.getElementById('requestName').value = requestArr[j].requestName;
+                  document.getElementById('requestUrl').value = requestArr[j].requestUrl;
+                  document.getElementById('requestParams').value = requestArr[j].requestParams;
+                  document.getElementById('requestInterval').value = requestArr[j].requestInterval;
+                  document.getElementById('respFormat').value = requestArr[j].respFormat;
+                  document.getElementById('requestMethod').value = requestArr[j].requestMethod;
                     requestMethod = requestArr[j].requestMethod;
                     switch (requestArr[j].requestContentType) {
                         case "text/palin":
-                            requestForm.requestContentType.selectedIndex = 0;
+                            document.getElementById('requestContentType').selectedIndex = 0;
                             requestContentType = "text/palin";
                             break;
                         case "application/json":
-                            requestForm.requestContentType.selectedIndex = 1;
+                            document.getElementById('requestContentType').selectedIndex = 1;
                             requestContentType = "application/json";
                             break;
                         }
                     if(requestArr[j].requireInteraction) {
-                        requestForm.requireInteraction.selectedIndex = 1;
+                        document.getElementById('requireInteraction').selectedIndex = 1;
                             requireInteraction = true;
                         }else{
-                            requestForm.requireInteraction.selectedIndex = 0;
+                            document.getElementById('requireInteraction').selectedIndex = 0;
                             requireInteraction = false;
                         }
 
@@ -180,13 +271,13 @@ window.addEventListener('load',function() {
     });
 
     var requestMethod = "GET";
-    requestForm.requestMethod.onchange = function() {
-        requestMethod = requestForm.requestMethod.value;
-    };
+   document.getElementById('requestMethod').addEventListener('change', function() {
+        requestMethod = document.getElementById('requestMethod').value;
+   });
 
     var requireInteraction = false;
-    requestForm.requireInteraction.onchange = function() {
-        var selectedIndex = requestForm.requireInteraction.selectedIndex;
+  document.getElementById('requireInteraction').addEventListener('change', function() {
+        var selectedIndex = document.getElementById('requireInteraction').selectedIndex;
         switch (selectedIndex) {
         case 0:
             requireInteraction = false;
@@ -196,11 +287,11 @@ window.addEventListener('load',function() {
             break;
         }
        
-    };
+  });
 
     var requestContentType = "text/palin";
-    requestForm.requestContentType.onchange = function() {
-        var selectedIndex = requestForm.requestContentType.selectedIndex;
+  document.getElementById('requestContentType').addEventListener('change', function() {
+        var selectedIndex = document.getElementById('requestContentType').selectedIndex;
         switch (selectedIndex) {
         case 0:
             requestContentType = "text/palin";
@@ -209,52 +300,59 @@ window.addEventListener('load',function() {
             requestContentType = "application/json";
             break;
         }
-    };
+  });
     //添加按钮响应事件
-    add.addEventListener('click', () =>{
+  document.getElementById('add').addEventListener('click', () =>{
         addOrUpdate();
-    });
-        update.addEventListener('click', () =>{
-        addOrUpdate();
-    });
-        updateCancel.addEventListener('click', () =>{
-        clearForm();
     });
 
+  document.getElementById('exportData').addEventListener('click', () =>{
+  
+    doExportToDisk();
+  });
+  document.getElementById('importData').addEventListener('change', doImportFromDisk, false);
+  
+  document.getElementById('update').addEventListener('click', () =>{
+        addOrUpdate();
+    });
+  document.getElementById('updateCancel').addEventListener('click', () =>{
+        clearForm();
+        });
+
         function clearForm(){
-            requestForm.timestamp.value = "";
-            requestForm.requestName.value = "";
-            requestForm.requestUrl.value = "";
-            requestForm.requestParams.value = "";
-            requestForm.requestInterval.value = "";
-            requestForm.respFormat.value = "";
-            requestForm.requestMethod.value = "GET";
-            requestForm.requestContentType.selectedIndex = 0;
-            requestForm.requireInteraction.selectedIndex = 0;
+          document.getElementById('timestamp').value = "";
+          document.getElementById('requestName').value = "";
+          document.getElementById('requestUrl').value = "";
+          document.getElementById('requestParams').value = "";
+          document.getElementById('requestInterval').value = "";
+          document.getElementById('respFormat').value = "";
+          document.getElementById('requestMethod').value = "GET";
+          document.getElementById('requestContentType').selectedIndex = 0;
+          document.getElementById('requireInteraction').selectedIndex = 0;
         }
 
 function addOrUpdate(){
       // showNotification();push.removeListener();
-        var requestName = requestForm.requestName.value;
+  var requestName = document.getElementById('requestName').value;
         if (!requestName.replace(/\s+/g, "")) {
             alert("任务名不能为空！");
             return;
         }
-        var requestUrl = requestForm.requestUrl.value;
+  var requestUrl = document.getElementById('requestUrl').value;
         if (!requestUrl.replace(/\s+/g, "")) {
             alert("请求地址不能为空！");
             return;
         }
-        var requestParams = requestForm.requestParams.value;
-        var requestInterval = requestForm.requestInterval.value;
+        var requestParams = document.getElementById('requestParams').value;
+        var requestInterval = document.getElementById('requestInterval').value;
   if (requestInterval && (requestInterval == -1 || requestInterval >= 1)) {
         requestInterval = parseInt(requestInterval);
   }else{
       // 默认30分钟请求一次
             requestInterval = 30;
   }
-        var respFormat = requestForm.respFormat.value;
-        var timestamp = requestForm.timestamp.value;
+        var respFormat = document.getElementById('respFormat').value;
+        var timestamp = document.getElementById('timestamp').value;
         if (!timestamp) {
             //添加操作
             timestamp = new Date().getTime();
